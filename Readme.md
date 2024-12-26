@@ -28,7 +28,7 @@ Ikuti langkah-langkah berikut untuk menginstal aplikasi:
 
 1. **Clone repositori:**
    ```bash
-   https://github.com/DeBotz-bot/TubeDow-Pro.git
+   git clone https://github.com/DeBotz-bot/TubeDow-Pro.git
    ```
 
 ```bash
