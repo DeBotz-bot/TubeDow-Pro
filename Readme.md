@@ -32,7 +32,7 @@ Ikuti langkah-langkah berikut untuk menginstal aplikasi:
    ```
 
 ```bash
- cd YouTubeDownloaderPro
+ cd TubeDow-Pro
 ```
 
 2. **Instal dependensi:**
