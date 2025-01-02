@@ -1,3 +1,5 @@
+# Copyright (c) 2023 DeBotz. All rights reserved.
+
 import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageTk
@@ -18,9 +20,9 @@ class YouTubeDownloader(ctk.CTk):
         super().__init__()
 
         # Window Configuration
-        self.title("YouTube Downloader Pro")
+        self.title("YouTube Downloader Pro v1.0")
         self.geometry("800x900")
-        self.configure(fg_color=("white", "#1a1a1a"))  # Light/Dark mode support
+        self.configure(fg_color=("white", "#1a1a1a"))  #gantii warna font
         
         # Create main container with padding
         self.container = ctk.CTkFrame(self, fg_color="transparent")
@@ -37,6 +39,15 @@ class YouTubeDownloader(ctk.CTk):
             text_color=("black", "white")
         )
         self.title_label.pack(pady=(0, 10))
+
+        # Add copyright label at the bottom
+        self.copyright_label = ctk.CTkLabel(
+            self.container,
+            text="© 2024 DeBotz. All rights reserved.",
+            font=ctk.CTkFont(size=12),
+            text_color=("gray50", "gray70")
+        )
+        self.copyright_label.pack(side="bottom", pady=(10, 0))
 
         # URL Input Section
         self.url_frame = ctk.CTkFrame(self.container, fg_color="transparent")
@@ -58,7 +69,7 @@ class YouTubeDownloader(ctk.CTk):
             command=self.convert_video,
             height=45,
             font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color=("#2ecc71", "#27ae60"),  # Light/Dark mode colors
+            fg_color=("#2ecc71", "#27ae60"),
             hover_color=("#27ae60", "#219a52"),
             corner_radius=10
         )
@@ -96,10 +107,45 @@ class YouTubeDownloader(ctk.CTk):
         self.options_frame = ctk.CTkFrame(self.container, fg_color="transparent")
         self.options_frame.pack(fill="x", pady=(0, 20))
 
-        # Resolution Selection
+        # Format Selection
+        self.format_var = tk.StringVar(value="video")
+        
+        # Format Radio Buttons Frame
+        self.format_frame = ctk.CTkFrame(self.options_frame, fg_color="transparent")
+        self.format_frame.pack(side="left", padx=(0, 20))
+        
+        self.video_radio = ctk.CTkRadioButton(
+            self.format_frame,
+            text="Video (MP4)",
+            variable=self.format_var,
+            value="video",
+            command=self.update_format_options,
+            font=ctk.CTkFont(size=14),
+            border_width_checked=6,
+            fg_color=("#2ecc71", "#27ae60"),
+        )
+        self.video_radio.pack(side="left", padx=(0, 10))
+        
+        self.audio_radio = ctk.CTkRadioButton(
+            self.format_frame,
+            text="Audio (MP3)",
+            variable=self.format_var,
+            value="audio",
+            command=self.update_format_options,
+            font=ctk.CTkFont(size=14),
+            border_width_checked=6,
+            fg_color=("#2ecc71", "#27ae60"),
+        )
+        self.audio_radio.pack(side="left")
+
+        # Quality Selection Frame
+        self.quality_frame = ctk.CTkFrame(self.options_frame, fg_color="transparent")
+        self.quality_frame.pack(side="left", padx=(0, 10))
+
+        # Resolution Selection (for video)
         self.resolution_var = tk.StringVar(value="")
         self.resolution_combo = ctk.CTkComboBox(
-            self.options_frame,
+            self.quality_frame,
             values=[],
             variable=self.resolution_var,
             font=ctk.CTkFont(size=14),
@@ -109,12 +155,27 @@ class YouTubeDownloader(ctk.CTk):
             button_hover_color=("#2573a7", "#1f618d"),
             corner_radius=10
         )
-        self.resolution_combo.pack(side="left", padx=(0, 10))
+        self.resolution_combo.pack(side="left")
+
+        # Audio Quality Selection (initially hidden)
+        self.audio_quality_var = tk.StringVar(value="192")
+        self.audio_quality_combo = ctk.CTkComboBox(
+            self.quality_frame,
+            values=["64", "128", "192", "256", "320"],
+            variable=self.audio_quality_var,
+            font=ctk.CTkFont(size=14),
+            height=40,
+            width=150,
+            button_color=("#2980b9", "#2573a7"),
+            button_hover_color=("#2573a7", "#1f618d"),
+            corner_radius=10
+        )
+        self.audio_quality_combo.pack_forget()  # Initially hidden
 
         # Download Button
         self.download_btn = ctk.CTkButton(
             self.options_frame,
-            text="Download Video",
+            text="Download",
             command=self.download_video,
             state="disabled",
             height=40,
@@ -166,6 +227,14 @@ class YouTubeDownloader(ctk.CTk):
         self.thumbnail_url = None
         self.download_folder = ""
 
+    def update_format_options(self):
+        if self.format_var.get() == "video":
+            self.audio_quality_combo.pack_forget()
+            self.resolution_combo.pack(side="left")
+        else:
+            self.resolution_combo.pack_forget()
+            self.audio_quality_combo.pack(side="left")
+
     def validate_youtube_url(self, url):
         youtube_regex = (
             r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/'
@@ -204,13 +273,14 @@ class YouTubeDownloader(ctk.CTk):
         self.thumbnail_url = info_dict.get('thumbnail', '')
         
         # Get available resolutions
-        resolutions = [
-            f"{f['height']}p" for f in info_dict['formats']
-            if f.get('vcodec') != 'none' and f.get('height') is not None
-        ]
-        resolutions = sorted(set(resolutions), key=lambda x: int(x.replace('p', '')))
-        self.resolution_combo.configure(values=resolutions)
-        self.resolution_var.set(resolutions[-1] if resolutions else "")
+        if self.format_var.get() == "video":
+            resolutions = [
+                f"{f['height']}p" for f in info_dict['formats']
+                if f.get('vcodec') != 'none' and f.get('height') is not None
+            ]
+            resolutions = sorted(set(resolutions), key=lambda x: int(x.replace('p', '')))
+            self.resolution_combo.configure(values=resolutions)
+            self.resolution_var.set(resolutions[-1] if resolutions else "")
 
         # Format duration to minutes:seconds
         duration_str = f"{int(duration//60)}:{int(duration%60):02d}" if isinstance(duration, (int, float)) else duration
@@ -248,7 +318,7 @@ class YouTubeDownloader(ctk.CTk):
         self.download_folder = save_path
         self.download_btn.configure(state="disabled")
         self.status_label.configure(
-            text="Downloading video...",
+            text="Downloading...",
             text_color=("#2980b9", "#3498db")
         )
         self.progress_bar.set(0)
@@ -256,13 +326,38 @@ class YouTubeDownloader(ctk.CTk):
 
     def start_download(self, save_path):
         try:
-            resolution = self.resolution_var.get().replace("p", "")
-            ydl_opts = {
-                'format': f'bestvideo[height<={resolution}]+bestaudio/best',
-                'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
-                'progress_hooks': [self.progress_hook],
-                'quiet': False
-            }
+            if self.format_var.get() == "video":
+                resolution = self.resolution_var.get().replace("p", "")
+                ydl_opts = {
+                    'format': f'bestvideo[height<={resolution}]+bestaudio/best',
+                    'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
+                    'progress_hooks': [self.progress_hook],
+                    'postprocessors': [{
+                        'key': 'FFmpegVideoRemuxer',
+                        'preferedformat': 'mp4',
+                    }],
+                    'merge_output_format': 'mp4',
+                    'postprocessor_args': [
+                        '-c:v', 'copy',
+                        '-c:a', 'aac',  # Convert audio to AAC codec
+                        '-strict', 'experimental'
+                    ],
+                    'quiet': False
+                }
+            else:  # Audio format
+                audio_quality = self.audio_quality_var.get()
+                ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
+                    'progress_hooks': [self.progress_hook],
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': audio_quality,
+                    }],
+                    'quiet': False
+                }
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([self.video_info['webpage_url']])
             self.after(0, self.download_complete)
@@ -271,17 +366,23 @@ class YouTubeDownloader(ctk.CTk):
 
     def progress_hook(self, d):
         if d['status'] == 'downloading':
-            percent = d['downloaded_bytes'] / d['total_bytes'] * 100
-            self.progress_bar.set(percent / 100)
-            
-            # Update status with download speed and ETA
-            speed = d.get('speed', 0)
-            eta = d.get('eta', 0)
-            
-            if speed and eta:
-                speed_mb = speed / 1024 / 1024  # Convert to MB/s
-                status_text = f"Downloading: {speed_mb:.1f} MB/s - {eta} seconds remaining"
-                self.status_label.configure(text=status_text)
+            try:
+                percent = d['downloaded_bytes'] / d['total_bytes'] * 100
+                self.progress_bar.set(percent / 100)
+                
+                # Update status with download speed and ETA
+                speed = d.get('speed', 0)
+                eta = d.get('eta', 0)
+                
+                if speed and eta:
+                    speed_mb = speed / 1024 / 1024  # Convert to MB/s
+                    status_text = f"Downloading: {speed_mb:.1f} MB/s - {eta} seconds remaining"
+                    self.status_label.configure(text=status_text)
+            except:
+                pass  # Handle cases where total_bytes might be unavailable
+
+        elif d['status'] == 'finished':
+            self.after(0, self.download_complete)
 
     def download_complete(self):
         self.status_label.configure(
@@ -290,12 +391,19 @@ class YouTubeDownloader(ctk.CTk):
         )
         self.download_btn.configure(state="normal")
         self.open_folder_btn.configure(state="normal")
-        self.progress_bar.set(0)
+        self.progress_bar.set(1)  # Set progress to 100%
 
     def open_download_folder(self):
         if self.download_folder:
             try:
-                subprocess.Popen(f'explorer "{os.path.abspath(self.download_folder)}"')
+                # Cross-platform folder opening
+                if os.name == 'nt':  # Windows
+                    os.startfile(os.path.abspath(self.download_folder))
+                elif os.name == 'posix':  # macOS and Linux
+                    if sys.platform == 'darwin':  # macOS
+                        subprocess.Popen(['open', os.path.abspath(self.download_folder)])
+                    else:  # Linux
+                        subprocess.Popen(['xdg-open', os.path.abspath(self.download_folder)])
             except Exception as e:
                 self.show_error(f"Failed to open folder: {str(e)}")
 
@@ -306,7 +414,9 @@ class YouTubeDownloader(ctk.CTk):
         )
         self.convert_btn.configure(state="normal")
         self.download_btn.configure(state="disabled")
+        self.progress_bar.set(0)
 
+# Tambahkan bagian main
 if __name__ == "__main__":
     app = YouTubeDownloader()
     app.mainloop()

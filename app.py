@@ -22,7 +22,7 @@ class YouTubeDownloader(ctk.CTk):
         # Window Configuration
         self.title("YouTube Downloader Pro v1.0")
         self.geometry("800x900")
-        self.configure(fg_color=("white", "#1a1a1a"))  # Light/Dark mode support
+        self.configure(fg_color=("white", "#1a1a1a"))  #gantii warna font
         
         # Create main container with padding
         self.container = ctk.CTkFrame(self, fg_color="transparent")
@@ -332,6 +332,16 @@ class YouTubeDownloader(ctk.CTk):
                     'format': f'bestvideo[height<={resolution}]+bestaudio/best',
                     'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
                     'progress_hooks': [self.progress_hook],
+                    'postprocessors': [{
+                        'key': 'FFmpegVideoRemuxer',
+                        'preferedformat': 'mp4',
+                    }],
+                    'merge_output_format': 'mp4',
+                    'postprocessor_args': [
+                        '-c:v', 'copy',
+                        '-c:a', 'aac',  # Convert audio to AAC codec
+                        '-strict', 'experimental'
+                    ],
                     'quiet': False
                 }
             else:  # Audio format
