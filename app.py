@@ -1,4 +1,4 @@
-# Copyright (c) 2023 DeBotz. All rights reserved.
+#  Copyright (c) 2023 DeBotz. All rights reserved.
 
 import tkinter as tk
 import customtkinter as ctk
